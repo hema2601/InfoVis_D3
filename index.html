@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+
+        <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+                                                                                                     integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+                <script src="https://d3js.org/d3.v7.min.js"></script>
+                <script src="https://unpkg.com/textures@1.2.0/dist/textures.js"></script>
+                <script src="components/normBarChart.js"></script>
+                <script src="components/histogram.js"></script>
+                <script src="components/map.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
+
+
+                <title>My Scatterplot</title>
+                <style>
+                        body {
+                                background: #eee;
+                        }
+
+                        .container-flex {
+                                margin-left: 10%;
+                                margin-right: 10%;
+                                background: white;
+                        }
+
+                        .hovered {
+                                stroke-width: 2;
+                                stroke: gray;
+                        }
+
+                </style>
+        </head>
+
+        <body>
+                <header>
+                        <nav class="container navbar navbar-light bg-light">
+                                <div class="container-fluid">
+                                        <span class="navbar-brand mb-0 h1">My Scatterplot</span>
+                                </div>
+                        </nav>
+
+                </header>
+
+                <main class="container-flex">
+
+                        <div class="row pt-2">
+                                <div class="col-md-auto text-end pe-2"><strong>Choose Mode :</strong></div>
+                                <div class="col-11">
+                                        <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="selection_mode" value="info_mode" id="im"
+                                                                                                                                     checked>
+                                                <label class="form-check-label" for="im">Information Mode</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="selection_mode" value="filter_mode" id="fm">
+                                                <label class="form-check-label" for="fm">Filter Mode</label>
+                                        </div>
+                                </div>
+                        </div>
+
+
+                        <div class="row pt-2">
+                                <div class="col-2 list-group">
+
+
+                                        <div class="row text-start pe-2"><strong>Satisfaction Data</strong></div>
+
+
+
+                                        <label for="attrs">Attributes : </label>
+
+                                        <div name="attrs" style=" overflow-y: scroll; height:200px;" class="list-group-item">
+
+                                                <ul id="StfAttrs">
+                                                        <input type="checkbox" id="stfattr1" name="attr1" value="stflife" checked>
+                                                        <label for="attr1"> stflife</label><br>
+                                                        <input type="checkbox" id="stfattr2" name="attr2" value="stfeco" checked>
+                                                        <label for="attr2">stfeco</label><br>
+                                                        <input type="checkbox" id="stfattr3" name="attr3" value="stfgov" checked>
+                                                        <label for="attr3">stfgov</label><br>
+                                                        <input type="checkbox" id="stfattr4" name="attr4" value="stfdem" checked>
+                                                        <label for="attr4">stfdem</label><br>
+                                                        <input type="checkbox" id="stfattr5" name="attr5" value="stfedu" checked>
+                                                        <label for="attr5">stfedu</label><br>
+                                                        <input type="checkbox" id="stfattr6" name="attr6" value="stfhlth" checked>
+                                                        <label for="attr6">stfhlth</label><br>
+                                                </ul>
+
+                                        </div>
+
+                                        <label for="sortingStf">Sort By : </label>
+                                        <select name="sortingStf" id="StfSort" class="list-group-item">
+                                                <optgroup label="Positive First">
+                                                        <option value="net-pos">Net Positive</option>
+                                                        <option value="ext-pos">Extreme Positive</option>
+                                                </optgroup>
+                                                <optgroup label="Negative First">
+                                                        <option value="net-neg">Net Negative</option>
+                                                        <option value="ext-neg">Extreme Negative</option>
+                                                </optgroup>
+                                        </select>
+
+                                </div>
+                                <div class="col-8 text-center">
+                                        <svg width="400" height="400" id="svg1">
+                                        </svg>
+                                </div>
+                                <div class="col-2 text-start list-group">
+                                        <div class="row text-end pe-2"><strong>Political Map</strong></div>
+                                        <label for="dataSel">Data Selection : </label>
+                                        <div class="row list-group-item" id="map_opts" name="dataSel">
+                                                        <div class="form-check form-check-inline">
+                                                                <input class="form-check-input" type="radio" name="map_mode" value="prtvede2" id="map_vm"
+                                                                                                                                               checked>
+                                                                <label class="form-check-label" for="im">Voted For</label>
+                                                        </div>
+                                                        <div class="form-check form-check-inline">
+                                                                <input class="form-check-input" type="radio" name="map_mode" value="prtclede" id="map_cm">
+                                                                <label class="form-check-label" for="fm">Closest To</label>
+                                                        </div>
+                                        </div>
+                                                <label for="MapDis">Display : </label>
+                                                <select class="form-select list-group-item"name="MapDis" id="map_display">
+                                                        <optgroup label="Global Trend">
+                                                                <option value="11" id="def_v">Strongest</option>
+                                                                <option value="12">Second Strongest</option>
+                                                        </optgroup>
+                                                        <optgroup label="Single Parties">
+                                                                <option value="20">CDU</option>
+                                                                <option value="21">SPD</option>
+                                                                <option value="22">The Lefts</option>
+                                                                <option value="23">The Greens</option>
+                                                                <option value="24">FDP</option>
+                                                                <option value="25">AfD</option>
+                                                                <option value="26">Pirate Party</option>
+                                                                <option value="27">NPD</option>
+                                                                <option value="28">Other</option>
+                                                                <option value="29" id="non_v">Non-Voters</option>
+                                                        </optgroup>
+                                                </select>
+                                </div>
+                        </div>
+                        <div class="row pt-2">
+                                <div class="col-2 text-start list-group">
+
+                                        <div class="row text-start pe-2"><strong>Human Values Data</strong></div>
+                                        
+                                        <label for="attrs">Attributes : </label>
+                                        <div name="attrs" style=" overflow-y: scroll; height:200px;" class="list-group-item">
+
+                                                <ul id="ValAttrs">
+                                                        <input type="checkbox" id="valattr1" name="attr1" value="impfun" checked>
+                                                        <label for="attr1">impfun</label><br>
+                                                        <input type="checkbox" id="valattr2" name="attr2" value="imptrad" checked>
+                                                        <label for="attr2">imptrad</label><br>
+                                                        <input type="checkbox" id="valattr3" name="attr3" value="impenv" checked>
+                                                        <label for="attr3">impenv</label><br>
+                                                        <input type="checkbox" id="valattr4" name="attr4" value="iplylfr" checked>
+                                                        <label for="attr4">iplylfr</label><br>
+                                                        <input type="checkbox" id="valattr5" name="attr5" value="iprspot" checked>
+                                                        <label for="attr5">iprspot</label><br>
+                                                        <input type="checkbox" id="valattr6" name="attr6" value="ipbhprp" checked>
+                                                        <label for="attr6">ipbhprp</label><br>
+                                                        <input type="checkbox" id="valattr7" name="attr7" value="ipadvnt" checked>
+                                                        <label for="attr7">ipadvnt</label><br>
+                                                        <input type="checkbox" id="valattr8" name="attr8" value="ipstrgv" checked>
+                                                        <label for="attr8">ipstrgv</label><br>
+                                                        <input type="checkbox" id="valattr9" name="attr9" value="ipsuces" checked>
+                                                        <label for="attr9">ipsuces</label><br>
+                                                        <input type="checkbox" id="valattr10" name="attr10" value="iphlppl" checked>
+                                                        <label for="attr10">iphlppl</label><br>
+                                                        <input type="checkbox" id="valattr11" name="attr11" value="impfree" checked>
+                                                        <label for="attr11">impfree</label><br>
+                                                        <input type="checkbox" id="valattr12" name="attr12" value="ipgdtim" checked>
+                                                        <label for="attr12">ipgdtim</label><br>
+                                                        <input type="checkbox" id="valattr13" name="attr13" value="ipmodst" checked>
+                                                        <label for="attr13">ipmodst</label><br>
+                                                        <input type="checkbox" id="valattr14" name="attr14" value="ipudrst" checked>
+                                                        <label for="attr14">ipudrst</label><br>
+                                                        <input type="checkbox" id="valattr15" name="attr15" value="ipfrule" checked>
+                                                        <label for="attr15">ipfrule</label><br>
+                                                        <input type="checkbox" id="valattr16" name="attr16" value="impdiff" checked>
+                                                        <label for="attr16">impdiff</label><br>
+                                                        <input type="checkbox" id="valattr17" name="attr17" value="impsafe" checked>
+                                                        <label for="attr17">impsafe</label><br>
+                                                        <input type="checkbox" id="valattr18" name="attr18" value="ipshabt" checked>
+                                                        <label for="attr18">ipshabt</label><br>
+                                                        <input type="checkbox" id="valattr19" name="attr19" value="ipeqopt" checked>
+                                                        <label for="attr19">ipeqopt</label><br>
+                                                        <input type="checkbox" id="valattr20" name="attr20" value="imprich" checked>
+                                                        <label for="attr20">imprich</label><br>
+                                                        <input type="checkbox" id="valattr21" name="attr21" value="ipcrtiv" checked>
+                                                        <label for="attr21">ipcrtiv</label><br>
+                                                </ul>
+
+                                        </div>
+                                        <label for="sortingVal">Sort By:</label>
+                                        <select name="sortingVal" id="ValSort" class="list-group-item">
+                                                <optgroup label="Positive First">
+                                                        <option value="net-pos">Net Positive</option>
+                                                        <option value="ext-pos">Extreme Positive</option>
+                                                </optgroup>
+                                                <optgroup label="Negative First">
+                                                        <option value="net-neg">Net Negative</option>
+                                                        <option value="ext-neg">Extreme Negative</option>
+                                                </optgroup>
+                                        </select>
+
+                                </div>
+                                <div class="col-8 text-center">
+                                        <svg width="400" height="400" id="svg2">
+                                        </svg>
+                                </div>
+                                <div class="col-2 text-start list-group">
+                                        <div class="row text-end pe-2"><strong>Demographic Data</strong></div>
+                                        
+                                        <label for="attrs">Attributes : </label>
+
+                                        <div name="attrs" style="row overflow-y: scroll; height:200px;" class="list-group-item">
+
+                                                <ul id="DemAttrs">
+                                                        <input type="checkbox" id="demattr1" name="attr1" value="gndr" checked>
+                                                        <label for="attr1">Gender</label><br>
+                                                        <input type="checkbox" id="demattr2" name="attr2" value="blgetmng" checked>
+                                                        <label for="attr2">Ethnicity</label><br>
+                                                </ul>
+
+                                                <div class="input-group">
+                                                <label for="ageBins" class="form-label">Age Bins</label>
+                                                <input type="number" id=ageBinsDisc value = "0";>
+                                                <input type="range" class="form-range" min="1" max="90" step="1" id="ageBins">
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+                </main>
+
+                <script>
+                        let gl_svg; // the main container, <svg>
+                        let gl_data; // loaded data
+
+                        let barChart1, barChart2;
+                        let histogram;
+                        let map;
+                        let vis1_components;
+
+                        function initialize() {
+                                svg1 = d3.select("#svg1");
+                                svg2 = d3.select("#svg2");
+
+                                let outer_margin = 100;
+                                let inner_margin = 30;
+                                let vis_size = 350;
+
+                                //Creating Satisfaction BarChart
+                                let margin  = {top: inner_margin, left: outer_margin, right: outer_margin, bottom: inner_margin}  
+                                barChart1 = new NormBarChart(svg1, gl_data, vis_size, vis_size, margin);
+                                vis1_component = ["stflife", "stfeco", "stfgov", "stfdem", "stfedu", "stfhlth"]
+                                vis1_domain = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                                barChart1.initialize(vis1_component, vis1_domain, "asc");
+                               
+
+                               //Creating Human ValueBar Chart
+                                margin  = {top: inner_margin , left: outer_margin, right: outer_margin, bottom: outer_margin}  
+                                barChart2 = new NormBarChart(svg2, gl_data, vis_size, vis_size, margin);
+                                vis2_component = ["ipcrtiv", "imprich", "ipeqopt", "ipshabt", "impsafe", "impdiff", "ipfrule", "ipudrst", "ipmodst", "ipgdtim", "impfree", "iphlppl", "ipsuces", "ipstrgv", "ipadvnt", "ipbhprp", "iprspot", "iplylfr", "impenv", "imptrad", "impfun"]
+                                vis2_domain = [6, 5, 4, 3, 2, 1]
+                                barChart2.initialize(vis2_component, vis2_domain, "desc");
+                               
+                               //Creating Political Map
+                                margin  = {top: inner_margin , left: 2 * outer_margin + vis_size, right: outer_margin, bottom: inner_margin}  
+                                map = new PoliticalMap(svg1, gl_data, vis_size, vis_size, margin);
+                                map.initialize();
+                               
+                               //Creating Demographic Histogram
+                                margin  = {top: inner_margin , left: 2 * outer_margin + vis_size, right: outer_margin, bottom: outer_margin}  
+                                histogram = new Histogram(svg2, gl_data, vis_size, vis_size, margin);
+                                histogram.initialize();
+                              
+
+                                d3.select("#StfAttrs").selectAll("input").on("click", (event) => updateBarChart(barChart1, "#StfAttrs", "#StfSort"))
+                                d3.select("#ValAttrs").selectAll("input").on("click", (event) => updateBarChart(barChart2, "#ValAttrs", "#ValSort"))
+                                d3.select("#DemAttrs").selectAll("input").on("click", (event) => updateHistogram("#ageBins", "#demattr1", "#demattr2"))
+                                d3.select("#StfSort").selectAll("option").on("click", (event) => updateBarChart(barChart1, "#StfAttrs", "#StfSort"))
+                                d3.select("#ValSort").selectAll("option").on("click", (event) => updateBarChart(barChart2, "#ValAttrs", "#ValSort"))
+                                d3.select("#map_opts").selectAll("input").on("click", MapOptsUpdate)
+                                d3.select("#map_display").selectAll("option").on("click", (event) => updateMap("#map_opts", "#map_display"))
+                                d3.select("#ageBins").on("input", (event) => updateHistogram("#ageBins", "#demattr1", "#demattr2", true))
+
+                        }
+
+                        function MapOptsUpdate(){
+                                if("prtvede2" === d3.select("#map_opts").select("input[type=radio]:checked").property("value")){
+                                        d3.select("#non_v").attr("disabled", null);
+
+                                }else{
+                                        d3.select("#non_v").attr("disabled", true);
+
+                                        if( d3.select("#map_display").property("value") === "29"){
+                                                d3.select("#map_display").property("value", "11")
+
+                                        }
+
+                                }
+                                updateMap("#map_opts", "#map_display")
+
+                        }
+
+                        function update() {
+
+                                updateBarChart(barChart1, "#StfAttrs", "#StfSort")
+                               updateBarChart(barChart2, "#ValAttrs", "#ValSort")
+                                updateHistogram("#ageBins", "#demattr1", "#demattr2")
+
+
+                                //get comps from HVData
+                               // barChart2.update()
+
+                                MapOptsUpdate()
+                                //updateMap("#map_opts", "#map_display")
+
+
+                        }
+
+                        function updateBarChart(chart, attr, sort){
+                                //get comps from checkboxes
+                                let comps = []
+                                d3.select(attr).selectAll("input:checked").selectAll(function(){comps.push(this.value)})
+
+                                //read sorting mode
+                                let order = d3.select(sort).property("value")
+
+                                chart.update(comps, order)
+                        }
+
+                        function updateMap(id, disp){
+                                let mode = d3.select(id).select("input[type=radio]:checked").property("value")
+
+                                let display = d3.select(disp).property("value")
+
+                                map.update(mode, display);
+
+                        }
+
+                        function updateHistogram(bin_slider, gndr, em, transition = false){
+                                let bins = d3.select(bin_slider).property("value")
+
+                                let gender = d3.select(gndr).property("checked") 
+                                let ethnicity = d3.select(em).property("checked") 
+
+                                histogram.update(bins, gender, ethnicity, transition)
+
+                        }
+
+
+
+                        d3.csv("https://gist.githubusercontent.com/hema2601/2c8cce986b642b197432efecac512674/raw/1fc2b7ffc8c8dca4efda5b41ed155fded9245b77/ESS9e03_2-subset.csv")
+                                .then(csvData => {
+                                        csvData.forEach(d => {
+                                                d["essround"] = +d["essround"];
+                                                d["edition"] = +d["edition"];
+                                                d["idno"] = +d["idno"];
+                                                d["dweight"] = +d["dweight"];
+                                                d["pspwght"] = +d["pspwght"];
+                                                d["pweight"] = +d["pweight"];
+                                                d["anweight"] = +d["anweight"];
+                                                d["vote"] = +d["vote"];
+                                                d["prtvede2"] = +d["prtvede2"];
+                                                d["prtclede"] = +d["prtclede"];
+                                                d["stflife"] = +d["stflife"];
+                                                d["stfeco"] = +d["stfeco"];
+                                                d["stfgov"] = +d["stfgov"];
+                                                d["stfdem"] = +d["stfdem"];
+                                                d["stfedu"] = +d["stfedu"];
+                                                d["stfhlth"] = +d["stfhlth"];
+                                                d["blgetmg"] = +d["blgetmg"];
+                                                d["gndr"] = +d["gndr"];
+                                                d["yrbrn"] = +d["yrbrn"];
+                                                //d["region"] = +d["region"];
+                                                d["ipcrtiv"] = +d["ipcrtiv"];
+                                                d["imprich"] = +d["imprich"];
+                                                d["ipeqopt"] = +d["ipeqopt"];
+                                                d["ipshabt"] = +d["ipshabt"];
+                                                d["impsafe"] = +d["impsafe"];
+                                                d["impdiff"] = +d["impdiff"];
+                                                d["ipfrule"] = +d["ipfrule"];
+                                                d["ipudrst"] = +d["ipudrst"];
+                                                d["ipmodst"] = +d["ipmodst"];
+                                                d["ipgdtim"] = +d["ipgdtim"];
+                                                d["impfree"] = +d["impfree"];
+                                                d["iphlppl"] = +d["iphlppl"];
+                                                d["ipsuces"] = +d["ipsuces"];
+                                                d["ipstrgv"] = +d["ipstrgv"];
+                                                d["ipadvnt"] = +d["ipadvnt"];
+                                                d["ipbhprp"] = +d["ipbhprp"];
+                                                d["iprspot"] = +d["iprspot"];
+                                                d["iplylfr"] = +d["iplylfr"];
+                                                d["impenv"] = +d["impenv"];
+                                                d["imptrad"] = +d["imptrad"];
+                                                d["impfun"] = +d["impfun"];
+                                                d["prob"] = +d["prob"];
+                                                d["stratum"] = +d["stratum"];
+                                                d["psu"] = +d["psu"];
+                                        });
+
+                                        gl_data = csvData;
+                                        initialize();
+                                        update();
+                                })
+                </script>
+
+                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+                        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+                        crossorigin="anonymous"></script>
+        </body>
+
+</html>

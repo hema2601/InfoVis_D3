@@ -1,0 +1,18 @@
+- Implement Filtering
+
+- Write Contents into Tooltip
+        - BarChart [DONE]
+
+- Flip Tooltip when approaching the right edge
+
+- Rearrange Legends so they are fully visible
+
+- Make the bin-adjustment more intuitive (either add the counter box or hover a value over the slider)
+
+- Put NPD and Pirates into the Others category
+
+- add explanations to the abbrviations (e.g. waht does ipshabt mean)
+
+- make bins have round start and end points [done, but kind of ugly]
+
+- add clear all and select all buttons to attribute selections
