@@ -13,13 +13,15 @@ class PoliticalMap{
 
         tooltip_size = 0;
         
-        constructor(svg, data, width = 250, height = 250, margin){
+        constructor(svg, data, width = 250, height = 250, margin, filter){
 
                 this.svg = svg;
                 this.data = data;
                 this.width = width;
                 this.height = height;
                 this.margin = margin
+
+                this.glFilter = filter
 
         }
 
@@ -81,21 +83,21 @@ class PoliticalMap{
 
                 //clear the map
                 this.container.selectAll("*").remove()
-
-
-
-
-                //do other filtering here==
-
-                //=========================
                 
+                //console.log("Map with Filter :")
+                //this.glFilter.printFilter()
+                
+                let data = this.glFilter.applyFilter(this.data)
+
+                //console.log(data)
+
 
                 this.state_data = []
                 let counts = []
                 this.states.forEach((D) => {
                         
                         //separate data by state
-                        let tmp = d3.filter(this.data, (d) => d["region"] === D)
+                        let tmp = d3.filter(data, (d) => d["region"] === D)
                         this.state_data.push(tmp)
 
                         //count the occurences of each party for the specified target
@@ -111,12 +113,12 @@ class PoliticalMap{
                                 counts.push(newCount);
                 })
 
-               //console.log(counts)
+               //console.log("Counts : ", counts)
 
                 this.container.attr("width", this.width)
                         .attr("height", this.height)
 
-                
+               //Create Color scale according to  
                 if(displayType === "11"|| displayType === "12" ){
                         if(target == "prtvede2")
                                 this.zScale = d3.scaleOrdinal().domain(this.parties.concat( ["Non-Voters"])).range(this.colors)
@@ -130,22 +132,39 @@ class PoliticalMap{
                                         max_value = d[parseInt(displayType[1])] / d3.sum(d)
                         })
 
-                        //this.zScale = d3.scaleLinear().domain([0, 100]).range([0, 100])//.interpolate(["white", "black"]);//["white", this.colors[3]])
-                        this.zScale = d3.scaleLinear([0, max_value], ["white", this.colors[parseInt(displayType[1])]])//.domain([0, 100]).range([0, 100])//.interpolate(["white", "black"]);//["white", this.colors[3]])
-
-                        //console.log(this.zScale(50))
+                        this.zScale = d3.scaleLinear([0, max_value], ["white", this.colors[parseInt(displayType[1])]])
 
                 }
 
-                this.container.selectAll("path")
+
+                //assemble data
+
+                let combined_data = this.map_data.features.map((d) => [d, counts[d.id]])
+
+                //console.log("Combined:", combined_data)
+                //console.log("Map_data:", this.map_data.features)
+
+                /*this.container.selectAll("path")
                         .data(this.map_data.features)
                         .enter()
                         .append("path")
                         .on("mouseover", (event) => { this.mouseoverEvent(event) })
                         .on("mouseout", (event) => { this.mouseoutEvent(event) })
                         .on("mousemove", (event) => { this.mousemoveEvent(event) })
+                        .on("mousedown", (event, d) => { this.mousedownEvent(event, d) })
                         .attr("d", this.pathGenerator)
-                        .style("fill", (d, idx) => this.zScale(this.determineColor(counts[idx], displayType)))
+                        .style("fill", (d, idx) => this.determineColor(counts[idx], displayType))
+                        .style("stroke", "lightgrey")
+                */this.container.selectAll("path")
+                        .data(combined_data)
+                        .enter()
+                        .append("path")
+                        .on("mouseover", (event) => { this.mouseoverEvent(event) })
+                        .on("mouseout", (event) => { this.mouseoutEvent(event) })
+                        .on("mousemove", (event) => { this.mousemoveEvent(event) })
+                        .on("mousedown", (event, d) => { this.mousedownEvent(event, d, displayType, target) })
+                        .attr("d", (d) =>this.pathGenerator(d[0]))
+                        .style("fill", (d) => this.determineColor(d[1], displayType))
                         .style("stroke", "lightgrey")
                         
 
@@ -165,29 +184,52 @@ class PoliticalMap{
         }
 
 
-
-        determineColor(data, display_type){
+        getDisplayed(data, display_type){
                 
-                if(display_type === "11")
-                        return this.parties[data.indexOf(Math.max(...data))]
-                if(display_type === "12"){
+                if(display_type === "11"){
+                        let max = Math.max(...data)
+                        if(max == 0)    return -1
+                        let ret
+                        if(data.indexOf(max) === 9)
+                                ret = "Non-Voters"
+                        else 
+                                ret = this.parties[data.indexOf(max)]
+                        return ret
+               } if(display_type === "12"){
                         let tmp = Math.max(...data)
+                        if(tmp == 0)    return -1
                         let idx = data.indexOf(tmp)
                         data[idx] = -Infinity;
 
                         let ret
-                        if(data.indexOf(Math.max(...data)) === 9)
+                        let max = Math.max(...data)  
+                        if(max == 0){
+                                data[idx] = tmp;
+                                return -1
+                        }
+                        if(data.indexOf(max) === 9)
                                 ret = "Non-Voters"
                         else 
-                                ret = this.parties[data.indexOf(Math.max(...data))]
+                                ret = this.parties[data.indexOf(max)]
                         data[idx] = tmp;
                         return ret
                 }
-                //if(display_type === "29")
-                //        return Math.max(...data)
-        
 
-                return data[parseInt(display_type[1])] / d3.sum(data)
+                return undefined 
+
+        }
+
+
+        determineColor(data, display_type){
+       
+                if(display_type === "11" || display_type == "12"){
+                        let ret = this.getDisplayed(data, display_type)
+                        if(ret == -1)   return "white"
+                        return this.zScale(ret)
+               
+                }
+                return this.zScale(data[parseInt(display_type[1])] / d3.sum(data))
+
 
         }
         mouseoverEvent(event){
@@ -255,6 +297,30 @@ class PoliticalMap{
         }
 
 
+        mousedownEvent(event, d, display_type, t){
+
+                let party = ""
+
+                //console.log("DP: ", display_type)
+
+                if(display_type === "11" || display_type === "12"){
+                        party = this.parties.indexOf(this.getDisplayed(d[1], display_type)) + 1
+                        if(party === 0){
+                                t = "vote"
+                                party = 2
+                        }
+               } else
+                        party = display_type[1]
+
+                includeSelect.addItems([["region", this.states[d[0].id]], [t, party]])
+                excludeSelect.addItems([["region", this.states[d[0].id]], [t, party]])
+                
+                includeSelect.display(event.target)
+                excludeSelect.display(event.target)
+
+
+
+        }
 
 
 }

@@ -47,6 +47,12 @@ class Filter{
                 return (this.values[this.keys.indexOf(key)])
         }
 
+        getArray(){
+                let arr = []
+                this.keys.forEach((d) => {arr.push([d, this.value(d)])})
+                return arr
+        }
+
 }
 
 
@@ -58,13 +64,15 @@ class Histogram{
 
         tooltip_size = 0;
 
-        constructor(svg, data, width = 250, height = 250, margin){
+        constructor(svg, data, width = 250, height = 250, margin, filter){
 
                 this.svg = svg;
                 this.data = data;
                 this.width = width;
                 this.height = height;
                 this.margin = margin
+
+                this.glFilter = filter
 
         }
 
@@ -119,6 +127,13 @@ class Histogram{
 
 
                 this.container.selectAll("*").remove()
+                
+                //console.log("Histogram with Filter :")
+                //this.glFilter.printFilter()
+                
+                let data = this.glFilter.applyFilter(this.data)
+
+                //console.log(data)
 
                 //Create bins based on all valid year numbers in accordance with the selected bin number
                 let bin = d3.bin().value((d) => d.yrbrn)
@@ -127,7 +142,7 @@ class Histogram{
                                    )
                
 
-                let bins = bin(d3.filter(this.data, (d) => d.yrbrn < 3000))
+                let bins = bin(d3.filter(data, (d) => d.yrbrn < 3000))
                
 
                 
@@ -187,7 +202,15 @@ class Histogram{
 
 
                         //filter bin entries according to the current filter
-                        let filtered_bins = bins.map(D => F.applyFilter(D));
+                        let filtered_bins = []
+
+                        bins.forEach((D) => {
+                                let arr = F.applyFilter(D)
+                                arr.x0 = D.x0
+                                arr.x1 = D.x1
+
+                                filtered_bins.push(arr)
+                        });
 
                         //load the fill texture, based on gender and ethnicity
                         let text = this.getTexture(F)
@@ -203,16 +226,17 @@ class Histogram{
                                 .selectAll("rect")
                                 .data(filtered_bins)
                                 .join("rect")
-                                .on("mouseover", (event) => { this.mouseoverEvent(event) })
+                                .on("mouseover", (event, d) => { this.mouseoverEvent(event, d, F) })
                                 .on("mouseout", (event) => { this.mouseoutEvent(event) })
                                 .on("mousemove", (event) => { this.mousemoveEvent(event) })
+                                .on("mousedown", (event, d) => { this.mousedownEvent(event, d, F) })
 
                         this.rects.condTrans(slider)
                                 //.transition()
-                                .attr("x", (d, idx) => this.xScale(current_year-bins[idx].x1))
+                                .attr("x", (d, idx) => this.xScale(current_year-d.x1))
                                 .attr("y", (d, idx) => this.yScale(offset[idx] + d.length))
                                 .attr("fill", text.url() )
-                                .attr("width", (d, idx) => this.xScale(current_year-bins[idx].x0) - this.xScale(current_year-bins[idx].x1))
+                                .attr("width", (d, idx) => this.xScale(current_year-d.x0) - this.xScale(current_year-d.x1))
                                 .attr("height", (d, idx) => this.height - this.yScale(d.length) )
                                 .attr("stroke", d => 'black')
                                 .attr("stroke-width", d => 1)
@@ -251,7 +275,10 @@ class Histogram{
 
         }
         
-        mouseoverEvent(event){
+        mouseoverEvent(event, d, F){
+
+
+                //console.log("Data:", d)
 
                 //Make Tooltip visible
                 this.tooltip.style("display", null)
@@ -268,7 +295,17 @@ class Histogram{
                 this.tooltip.append("path")
 
                 //Append Contents here =====================
-                let text = ["Placeholder Tooltip"]
+                let text = [["Age", d.x0, "to", d.x1].join(' ')]
+
+                text.push([d.length, "(", 50, "%) out of", 2000].join(' '))
+
+                //console.log(F.getArray())
+
+                F.getArray().forEach((d) => {text.push([d[0], ":", d[1]].join(' '))})
+
+
+
+                //console.log(text)
                 //=========================================
 
                 let txt = this.tooltip.append("text")
@@ -318,6 +355,21 @@ class Histogram{
 
 
 
+        mousedownEvent(event, d, F){
+
+                let items = F.getArray()
+
+                items.push(["yrbrn", [d.x0, d.x1]])
+
+                includeSelect.addItems(items)
+                excludeSelect.addItems(items)
+                
+                includeSelect.display(event.target)
+                excludeSelect.display(event.target)
+
+
+
+        }
 
 
 

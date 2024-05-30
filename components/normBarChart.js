@@ -8,7 +8,7 @@ class NormBarChart{
 
         tooltip_size = 0//100;
 
-        constructor(svg, data, width = 250, height = 250, margin){
+        constructor(svg, data, width = 250, height = 250, margin, filter){
 
                 this.svg = svg;
                 this.data = data;
@@ -16,9 +16,13 @@ class NormBarChart{
                 this.height = height;
                 this.margin = margin
 
+                this.glFilter = filter
+
         }
 
         initialize(comps, domain, order){
+
+                //this.glFilter = filter
 
                 this.container = this.svg.append("g");
                 this.xAxis = this.svg.append("g");
@@ -65,6 +69,13 @@ class NormBarChart{
 
                 this.container.selectAll("*").remove()
 
+                //console.log("BarChart with Filter :")
+                //this.glFilter.printFilter()
+
+                let data = this.glFilter.applyFilter(this.data)
+
+                //console.log(data)
+
                 if(comps != undefined)
                         this.comps = comps
 
@@ -81,12 +92,26 @@ class NormBarChart{
                 
 
                 this.comps.forEach(c => {
-                        let count = d3.count(d3.filter(this.data, (d) => this.domain.indexOf(d[c]) != -1), (d) => d[c])
+                        let count = d3.count(d3.filter(data, (d) => this.domain.indexOf(d[c]) != -1), (d) => d[c])
                         //create Data
                          this.processed_data[c] = {}
                          this.processed_data[c]["count"] = count 
-                        let test = d3.flatRollup(d3.filter(this.data, (d) => this.domain.indexOf(d[c]) != -1), (D) => D.length, (d) => d[c])
+                        let test = d3.flatRollup(d3.filter(data, (d) => this.domain.indexOf(d[c]) != -1), (D) => D.length, (d) => d[c])
                          //console.log(test)
+                        // fill in 0s
+                        if(test.length != this.domain.length){
+                                this.domain.forEach((d) =>{
+                                        let exist = 0
+                                        test.forEach((D) => {
+                                                if(D[0] === d)
+                                                       exist = 1;
+                                        })
+                                        if(exist === 0)
+                                                test.push([d, 0])
+                                })
+
+                        }
+                
 
                         if(this.order === "desc")
                                 test = d3.map(d3.sort(test, (a, b) => b[0] - a[0]), (d) => d[1])
@@ -170,6 +195,7 @@ class NormBarChart{
                                 .on("mouseover", (event, d) => { this.mouseoverEvent(event, d, c) })
                                 .on("mouseout", (event) => { this.mouseoutEvent(event, c) })
                                 .on("mousemove", (event) => { this.mousemoveEvent(event, c) })
+                                .on("mousedown", (event, d) => { this.mousedownEvent(event, d, c) })
                                 .transition()
                                 .attr("x", (d, idx) => this.xScale( this.processed_data[c]["start"][idx] /  this.processed_data[c]["count"]))
                                 .attr("y", d => this.yScale(c))// + this.yScale.bandwidth() * 1/3 )
@@ -276,6 +302,16 @@ class NormBarChart{
         }
         
 
+        mousedownEvent(event, d, c){
+                
+                includeSelect.addItems([[c, d]])
+                excludeSelect.addItems([[c, d]])
+                
+                includeSelect.display(event.target)
+                excludeSelect.display(event.target)
+
+        }
+        
 
 
 
