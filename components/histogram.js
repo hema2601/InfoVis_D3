@@ -98,6 +98,8 @@ class Histogram{
         }
 
         initialize(){
+                
+                this.current_year = 2018
 
                 this.container = this.svg.append("g");
                 this.xAxis = this.svg.append("g");
@@ -113,7 +115,7 @@ class Histogram{
                 let text = textures.lines().thicker()
                 this.svg.call(text)
 
-                this.zScale = d3.scaleOrdinal().domain(["male", "female", "ethnic minority", "ethnic majority"]).range([this.blue, this.red, "lightgrey", text.url()])
+                this.zScale = d3.scaleOrdinal().domain(["male", "female", "ethn. maj.", "ethn. min."]).range([this.blue, this.red, "lightgrey", text.url()])
 
                 this.svg
                         .attr("width", this.width + this.margin.left + this.margin.right)
@@ -142,7 +144,8 @@ class Histogram{
                                    )
                
 
-                let bins = bin(d3.filter(data, (d) => d.yrbrn < 3000))
+                data = d3.filter(data, (d) => d.yrbrn < 3000)
+                let bins = bin(data)
                
 
                 
@@ -186,10 +189,9 @@ class Histogram{
 
 
                 
-                let current_year = 2018
         
 
-                this.xScale = this.xScale.domain([current_year - bins.slice(-1)[0].x1, current_year - bins.slice(0)[0].x0])
+                this.xScale = this.xScale.domain([this.current_year - bins.slice(-1)[0].x1, this.current_year - bins.slice(0)[0].x0])
                 this.yScale = this.yScale.domain([0, d3.max(Object.values(bins.map(d => d.length)))])
 
 
@@ -226,17 +228,17 @@ class Histogram{
                                 .selectAll("rect")
                                 .data(filtered_bins)
                                 .join("rect")
-                                .on("mouseover", (event, d) => { this.mouseoverEvent(event, d, F) })
+                                .on("mouseover", (event, d) => { this.mouseoverEvent(event, d, F, data.length) })
                                 .on("mouseout", (event) => { this.mouseoutEvent(event) })
                                 .on("mousemove", (event) => { this.mousemoveEvent(event) })
                                 .on("mousedown", (event, d) => { this.mousedownEvent(event, d, F) })
 
                         this.rects.condTrans(slider)
                                 //.transition()
-                                .attr("x", (d, idx) => this.xScale(current_year-d.x1))
+                                .attr("x", (d, idx) => this.xScale(this.current_year-d.x1))
                                 .attr("y", (d, idx) => this.yScale(offset[idx] + d.length))
                                 .attr("fill", text.url() )
-                                .attr("width", (d, idx) => this.xScale(current_year-d.x0) - this.xScale(current_year-d.x1))
+                                .attr("width", (d, idx) => this.xScale(this.current_year-d.x0) - this.xScale(this.current_year-d.x1))
                                 .attr("height", (d, idx) => this.height - this.yScale(d.length) )
                                 .attr("stroke", d => 'black')
                                 .attr("stroke-width", d => 1)
@@ -260,7 +262,7 @@ class Histogram{
                         .call(d3.axisLeft(this.yScale));
 
                         this.legend
-                                .attr("transform", `translate(${this.width + this.margin.left + 30}, ${this.margin.top})`)
+                                .attr("transform", `translate(${this.width + this.margin.left + 5}, ${this.margin.top})`)
 
                                 .style("display", "inline")
                                 .call(d3.legendColor().scale(this.zScale));
@@ -275,10 +277,9 @@ class Histogram{
 
         }
         
-        mouseoverEvent(event, d, F){
+        mouseoverEvent(event, d, F, total){
 
-
-                //console.log("Data:", d)
+                //console.log("Over!")
 
                 //Make Tooltip visible
                 this.tooltip.style("display", null)
@@ -295,17 +296,19 @@ class Histogram{
                 this.tooltip.append("path")
 
                 //Append Contents here =====================
-                let text = [["Age", d.x0, "to", d.x1].join(' ')]
+                let text = [["Age", this.current_year - d.x1, "to", this.current_year - d.x0].join(' ')]
 
-                text.push([d.length, "(", 50, "%) out of", 2000].join(' '))
+                F.getArray().forEach((d) => {
+                        if(d[0] == "gndr")
+                                text.push([ ((d[1] == 1) ? "Male" : "Female")])
+                        if(d[0] == "blgetmg")
+                                text.push([ ((d[1] == 1) ? "Ethnic Minority" : "Ethnic Majority")])
+                                })
+                text.push([d.length, "(", Math.round(d.length / total * 10000) / 100 , "%) out of", total].join(' '))
 
-                //console.log(F.getArray())
-
-                F.getArray().forEach((d) => {text.push([d[0], ":", d[1]].join(' '))})
 
 
 
-                //console.log(text)
                 //=========================================
 
                 let txt = this.tooltip.append("text")
@@ -314,7 +317,7 @@ class Histogram{
                                 .join("tspan")
                                 .text((d) => d)
                                 .attr("font-size", "0.8em")
-                                .attr("font-weight", (d, idx) => idx ? "" : "bold")
+                                .attr("font-weight", (d, idx) => idx > F.getArray().length ? "" : "bold")
                                 .attr("y", (d, idx) => `${(idx+1) * 0.8}em`)
                                 .attr("x", 0)
 
@@ -344,11 +347,32 @@ class Histogram{
 
 
         mousemoveEvent(event){
-                let rect = this.svg.node().getBoundingClientRect();
-                if(event.pageY - rect.y + 20 + this.tooltip_size < this.width)         
-                        this.tooltip.attr("transform", `translate(${event.pageX - rect.x + 20}, ${event.pageY - rect.y + 20})`)
-                else
-                        this.tooltip.attr("transform", `translate(${event.pageX - rect.x + 20}, ${event.pageY - rect.y - 40 - 1/2 * this.tooltip_size})`)
+                let tt = this.tooltip.node().getBoundingClientRect();
+                let graph = this.container.node().getBoundingClientRect();
+
+
+                let add_x = this.width + 2 * this.margin.right
+                let add_y = this.margin.top
+                let mouse_pos = [event.pageX - graph.x , event.pageY - graph.y]
+
+                let offset = 20;
+
+                let x = mouse_pos[0] + offset
+                let y = mouse_pos[1] + offset
+
+
+
+                if(mouse_pos[0] + tt.width + offset >= graph.width )
+                       x = mouse_pos[0] - offset - tt.width
+
+
+                if(mouse_pos[1] + tt.height + offset >= graph.height )
+                        y = mouse_pos[1] - offset - tt.height
+
+               x += add_x
+               y += add_y
+
+                this.tooltip.attr("transform", `translate(${x}, ${y})`)
 
         }
         

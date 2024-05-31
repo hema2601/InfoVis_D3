@@ -8,6 +8,17 @@ class HoverSelect{
 
                 this.glFilter = filter
 
+                this.primary = "darkgrey"
+                this.secondary = "lightgrey"
+                if(mode === "inc"){
+                        this.primary = "green"
+                        this.secondary = "yellowgreen"
+                }
+                if(mode === "exc"){
+                        this.primary = "red"
+                        this.secondary = "tomato"
+                }
+
         }
 
         display(target){
@@ -41,7 +52,10 @@ class HoverSelect{
                         .html((d) => `${d[0]} = ${d[1]}`)
                         .on("mouseover", (event) => {
                                 //console.log("Hovered")
-                                d3.select(event.target).classed("hovered", true)})
+                                d3.select(event.target).style("background-color", this.secondary)})
+                        .on("mouseout", (event) => {
+                                //console.log("Hovered")
+                                d3.select(event.target).style("background-color", this.primary)})
                         .on("mouseup", (event, d) => {
                                 //console.log("Selected Exclude")
                                 this.glFilter.addFilter(d[0], d[1], this.mode)

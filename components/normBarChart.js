@@ -22,8 +22,6 @@ class NormBarChart{
 
         initialize(comps, domain, order){
 
-                //this.glFilter = filter
-
                 this.container = this.svg.append("g");
                 this.xAxis = this.svg.append("g");
                 this.yAxis = this.svg.append("g");
@@ -38,10 +36,9 @@ class NormBarChart{
                 
 
                 let mod = Math.floor(this.colorScheme.length / this.domain.length)
-                //console.log(mod)
 
+                this.colorScheme = this.colorScheme.filter((n, idx) => idx > Math.floor(mod/2) && idx < this.colorScheme.length - Math.floor(mod/2))
                 this.colorScheme = this.colorScheme.filter((n, idx) => (idx % mod) === 0)
-                //console.log(this.colorScheme)        
 
 
                 this.xScale = d3.scaleLinear().range([0, this.width]);
@@ -51,10 +48,7 @@ class NormBarChart{
                 let upper = this.domain[this.domain.length - 1]
 
 
-                //this.zScale = d3.scaleDiverging().domain([lower, lower + ((upper - lower) / 2), upper]).interpolator(d3.interpolateRdBu);
-                //this.zScale = d3.scaleQuantize().domain([lower, upper]).range(d3.interpolateRdBu)
                 this.zScale = d3.scaleOrdinal().domain(this.domain).range(this.colorScheme)
-                //this.zScale = d3.scaleLinear().domain(this.domain).interpolate(this.colorScheme)
 
                 this.svg
                         .attr("width", this.width + this.margin.left + this.margin.right)
@@ -216,7 +210,7 @@ class NormBarChart{
 
 
                 this.legend
-                        .attr("transform", `translate(${this.width + this.margin.left + 30}, ${this.margin.top})`)
+                        .attr("transform", `translate(${this.width + this.margin.left + 10}, ${this.margin.top})`)
 
                         .style("display", "inline")
                         .call(d3.legendColor().scale(this.zScale));
@@ -293,13 +287,45 @@ class NormBarChart{
 
 
         mousemoveEvent(event, c){
-                let rect = this.svg.node().getBoundingClientRect();
-                if(event.pageY - rect.y + 20 + this.tooltip_size < this.width)         
-                        this.tooltip.attr("transform", `translate(${event.pageX - rect.x + 20}, ${event.pageY - rect.y + 20})`)
-                else
-                        this.tooltip.attr("transform", `translate(${event.pageX - rect.x + 20}, ${event.pageY - rect.y - 20 - 1/2 * this.tooltip_size})`)
 
-        }
+                let tt = this.tooltip.node().getBoundingClientRect();
+                let graph = this.container.node().getBoundingClientRect();
+
+
+                let add_x =  this.margin.right
+                let add_y = this.margin.top
+                let mouse_pos = [event.pageX - graph.x , event.pageY - graph.y]
+
+                let offset = 20;
+
+                let x = mouse_pos[0] + offset
+                let y = mouse_pos[1] + offset
+
+
+
+                if(mouse_pos[0] + tt.width + offset >= graph.width )
+                       x = mouse_pos[0] - offset - tt.width
+
+
+                if(mouse_pos[1] + tt.height + offset >= graph.height )
+                        y = mouse_pos[1] - offset - tt.height
+
+               x += add_x
+               y += add_y
+
+                this.tooltip.attr("transform", `translate(${x}, ${y})`)
+                /*
+                let rect = this.svg.node().getBoundingClientRect();
+                let tt = this.tooltip.node().getBoundingClientRect();
+                if(event.pageY - rect.y + 20 + this.tooltip_size < this.width && event.pageX - rect.x + 20 < this.height){         
+                        this.tooltip.attr("transform", `translate(${event.pageX - rect.x + 20}, ${event.pageY - rect.y + 20})`)
+               } else if(event.pageX - rect.x + 20 >= this.height && event.pageY - rect.y + 20 + this.tooltip_size >= this.width)  {
+                        this.tooltip.attr("transform", `translate(${event.pageX - rect.x - 20 - tt.width}, ${event.pageY - rect.y + 20})`)
+               } else if(event.pageY - rect.y + 20 + this.tooltip_size >= this.width)
+                        this.tooltip.attr("transform", `translate(${event.pageX - rect.x + 20}, ${event.pageY - rect.y - 20 - 1/2 * this.tooltip_size})`)
+                else
+                        this.tooltip.attr("transform", `translate(${event.pageX - rect.x - 20 - tt.width}, ${event.pageY - rect.y - 20 - 1/2 * this.tooltip_size})`)
+        */}
         
 
         mousedownEvent(event, d, c){

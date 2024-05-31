@@ -89,7 +89,7 @@ class PoliticalMap{
                 
                 let data = this.glFilter.applyFilter(this.data)
 
-                //console.log(data)
+                //console.log(d3.filter(data, (d) => this.states.indexOf(d["region"]) === -1))
 
 
                 this.state_data = []
@@ -141,6 +141,8 @@ class PoliticalMap{
 
                 let combined_data = this.map_data.features.map((d) => [d, counts[d.id]])
 
+                
+
                 //console.log("Combined:", combined_data)
                 //console.log("Map_data:", this.map_data.features)
 
@@ -159,7 +161,7 @@ class PoliticalMap{
                         .data(combined_data)
                         .enter()
                         .append("path")
-                        .on("mouseover", (event) => { this.mouseoverEvent(event) })
+                        .on("mouseover", (event, d) => { this.mouseoverEvent(event, d, data.length, target, displayType) })
                         .on("mouseout", (event) => { this.mouseoutEvent(event) })
                         .on("mousemove", (event) => { this.mousemoveEvent(event) })
                         .on("mousedown", (event, d) => { this.mousedownEvent(event, d, displayType, target) })
@@ -169,7 +171,7 @@ class PoliticalMap{
                         
 
                 this.legend
-                        .attr("transform", `translate(${this.width + this.margin.left + 30}, ${this.margin.top})`)
+                        .attr("transform", `translate(${this.width + this.margin.left - 10}, ${this.margin.top})`)
                         .style("display", "inline")
                         .call(d3.legendColor().scale(this.zScale));
                 
@@ -228,11 +230,14 @@ class PoliticalMap{
                         return this.zScale(ret)
                
                 }
+                if(data[parseInt(display_type[1])] === 0)        return "white"
                 return this.zScale(data[parseInt(display_type[1])] / d3.sum(data))
 
 
         }
-        mouseoverEvent(event){
+        mouseoverEvent(event, d, total, tar, dt){
+
+                //console.log(d)
 
                 //Make Tooltip visible
                 this.tooltip.style("display", null)
@@ -243,13 +248,41 @@ class PoliticalMap{
 
 
                 //Format Data Here=========
+                let people_num = d3.sum(d[1])               
+                let percentage = Math.round(people_num / total * 10000 ) / 100
+
+
 
                 //======================
                
                 this.tooltip.append("path")
 
                 //Append Contents here =====================
-                let text = ["Placeholder Tooltip"]
+                let text = [d[0].properties.name]
+                if(dt === "11" || dt === "12"){
+                        text.push([people_num, "(", percentage, "%) out of", total].join(' '))
+                        this.parties.forEach((D, idx) => {
+                                let abs = d[1][idx];
+                                //console.log("Abs:", abs)
+                                let p = Math.round(abs / people_num * 10000) / 100
+                                text.push([D, ":", p, "% (", abs, ")"].join(' '))
+                        })
+
+                        if(tar === "prtvede2"){
+                                let abs = d[1][this.parties.length];
+                                let p = Math.round(abs / people_num * 10000) / 100
+                                text.push(["Non-Voters :", p, "% (", abs, ")"].join(' '))
+                        }
+                }else{
+
+                        text.push([people_num, "(", percentage, "%) out of", total].join(' '))
+                        let abs = d[1][dt[1]];
+                        let p = Math.round(abs / people_num * 10000) / 100
+                        if(dt[1] === "9")
+                                text.push(["Non-Voters :", p, "% (", abs, ")"].join(' '))
+                        else
+                                text.push([this.parties[dt[1]], ":", p, "% (", abs, ")"].join(' '))
+                }
                 //=========================================
 
                 let txt = this.tooltip.append("text")
@@ -264,6 +297,7 @@ class PoliticalMap{
 
                 let path = d3.path()
                 
+
                 let group = this.tooltip.node().getBoundingClientRect();
 
                 path.rect(-5, -5, group.width + 10, group.height + 5)
@@ -288,11 +322,35 @@ class PoliticalMap{
 
 
         mousemoveEvent(event){
-                let rect = this.svg.node().getBoundingClientRect();
-                if(event.pageY - rect.y + 20 + this.tooltip_size < this.width)         
-                        this.tooltip.attr("transform", `translate(${event.pageX - rect.x + 20}, ${event.pageY - rect.y + 20})`)
-                else
-                        this.tooltip.attr("transform", `translate(${event.pageX - rect.x + 20}, ${event.pageY - rect.y - 40 - 1/2 * this.tooltip_size})`)
+
+
+                let tt = this.tooltip.node().getBoundingClientRect();
+                let graph = this.container.node().getBoundingClientRect();
+
+
+                let add_x = this.width + 2 * this.margin.right + 30 
+                let add_y = 0 
+                let mouse_pos = [event.pageX - graph.x , event.pageY - graph.y]
+
+                let offset = 20;
+
+                let x = mouse_pos[0] + offset
+                let y = mouse_pos[1] + offset
+
+
+
+                if(mouse_pos[0] + tt.width + offset >= graph.width )
+                       x = mouse_pos[0] - offset - tt.width
+
+
+                if(mouse_pos[1] + tt.height + offset >= graph.height )
+                        y = mouse_pos[1] - offset - tt.height
+
+               x += add_x
+               y += add_y
+
+                this.tooltip.attr("transform", `translate(${x}, ${y})`)
+
 
         }
 
@@ -301,16 +359,19 @@ class PoliticalMap{
 
                 let party = ""
 
-                //console.log("DP: ", display_type)
-
                 if(display_type === "11" || display_type === "12"){
                         party = this.parties.indexOf(this.getDisplayed(d[1], display_type)) + 1
                         if(party === 0){
                                 t = "vote"
                                 party = 2
                         }
-               } else
-                        party = display_type[1]
+               } else {
+                        party = parseInt(display_type[1]) + 1
+                        if(party === 10){
+                                t = "vote"
+                                party = 2
+                        }
+                }
 
                 includeSelect.addItems([["region", this.states[d[0].id]], [t, party]])
                 excludeSelect.addItems([["region", this.states[d[0].id]], [t, party]])

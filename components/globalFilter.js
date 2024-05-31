@@ -6,13 +6,13 @@ class GlobalFilter{
         exlcude = []
 
 
-        constructor(func){
+        constructor(func, list_id){
                 this.include = []
                 this.exclude = []
 
                 this.update = func
-                //console.log(func)
-                //console.log(this.update)
+
+                this.filterList = d3.select(list_id)
         }
 
 
@@ -22,9 +22,12 @@ class GlobalFilter{
                         this.include.push([k, v])
                 else if(mode === "exc")
                         this.exclude.push([k, v])
-                
-                //console.log(this.update())
-                update()
+               
+                this.filterList.append("li")
+                                .html([k, (mode === "inc")?"==":"!=", v].join(' '))
+
+
+                this.update()
         }
 
         applyFilter(data){
@@ -33,12 +36,9 @@ class GlobalFilter{
 
 
                 this.include.forEach((d) => {
-                        //console.log(d[0], d[1])
                         if(Array.isArray(d[1])){
 
                                 let range = Array.from({length: d[1][1] - d[1][0] + 1}, (_, i) => i + d[1][0])
-
-                                //console.log(range)
 
                                 new_data = d3.filter(new_data, (D) => range.indexOf(D[d[0]]) != -1)
 
@@ -60,19 +60,13 @@ class GlobalFilter{
         }
 
         resetFilter(){
-                while(this.include.length > 0)
-                        this.include.pop()
-                
-                while(this.exclude.length > 0)
-                        this.exclude.pop()
+                this.filterList.selectAll("li")
+                               .remove()
 
+                this.include = []
+                this.exclude = []
 
-                //this.include = []
-                //this.exclude = []
-
-                //console.log(this.include)
-
-                update()
+                this.update()
 
         }
 

@@ -1,23 +1,20 @@
-- Implement Filtering
-        - Rough filtering for BarChart [DONE]
-        - Make filters accumulate first and the have a separate apply button
+- [DONE] Implement Filtering [DONE]
 
-- Write Contents into Tooltip
-        - BarChart [DONE]
+- [DONE] Write Contents into Tooltip [DONE]
 
-- Flip Tooltip when approaching the right edge
+- [DONE] Flip Tooltip when approaching the right edge
 
 - Rearrange Legends so they are fully visible
 
-- Make the bin-adjustment more intuitive (either add the counter box or hover a value over the slider)
+- [포기]Make the bin-adjustment more intuitive (either add the counter box or hover a value over the slider)
 
-- Put NPD and Pirates into the Others category
+- [포기]Put NPD and Pirates into the Others category
 
 - add explanations to the abbrviations (e.g. waht does ipshabt mean)
 
-- make bins have round start and end points [done, but kind of ugly]
+- [DONE] make bins have round start and end points [done, but kind of ugly]
 
-- add clear all and select all buttons to attribute selections
+- [포기] add clear all and select all buttons to attribute selections
 
 
 
